@@ -8,6 +8,7 @@
 #include "glad.h"
 #include "GLFW/glfw3.h"
 #include "cglm/struct.h"
+#include "assets.h"
 
 typedef struct Button
 {
@@ -34,4 +35,10 @@ typedef struct Sandsim
     vec2s fbSize;
     bool running;
     bool fullScreen;
+
+    Shader* shaderProgram;
+    Pipeline* pipeline;
+    unsigned int worldVao;
+    unsigned int worldVbo;
+    mat4s projection;
 }Sandsim;

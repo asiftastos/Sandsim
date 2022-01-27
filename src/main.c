@@ -24,13 +24,15 @@ static void glfw_error_callback(int code, const char* msg)
 
 static void glfw_framebuffer_size_callback(GLFWwindow* win, int w, int h)
 {
-    sandsim->fbSize = (vec2s){ {w, h} };
+    sandsim->fbSize.x = w;
+    sandsim->fbSize.y = h;
     glViewport(0, 0, w, h);
 }
 
 static void glfw_windowsize_callback(GLFWwindow* win, int w, int h)
 {
-    sandsim->wSize = (vec2s){ {w, h} };
+    sandsim->wSize.x = w;
+    sandsim->wSize.y = h;
 }
 
 static void glfw_key_callback(GLFWwindow* win, int key, int scancode, int action, int mods)
@@ -79,6 +81,103 @@ static void glfw_scroll_callback(GLFWwindow* win, double xoff, double yoff)
 
 #pragma endregion
 
+#pragma region ========================   INIT   =============================
+
+static void windowInit()
+{
+    //glfw init
+    glfwSetErrorCallback(glfw_error_callback);
+    if (glfwInit() == GLFW_FALSE)
+    {
+        printf("Failed to initialize GLFW\n");
+        return 1;
+    }
+    printf("GLFW: %s\n", glfwGetVersionString());
+
+    //window init
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+#ifdef _DEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif // DEBUG
+    sandsim->window = glfwCreateWindow(sandsim->wSize.x, sandsim->wSize.y, "Sandsim", NULL, NULL);
+    assert(sandsim->window != NULL);
+
+    //glfw callbacks
+    glfwSetFramebufferSizeCallback(sandsim->window, glfw_framebuffer_size_callback);
+    glfwSetWindowSizeCallback(sandsim->window, glfw_windowsize_callback);
+    glfwSetKeyCallback(sandsim->window, glfw_key_callback);
+    glfwSetMouseButtonCallback(sandsim->window, glfw_mouse_button_callback);
+    glfwSetCharCallback(sandsim->window, glfw_char_callback);
+    glfwSetScrollCallback(sandsim->window, glfw_scroll_callback);
+
+    //window size, fullscreen
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
+    int xpos = 0;
+    int ypos = 0;
+    if (!sandsim->fullScreen)
+    {
+        xpos = (vmode->width - sandsim->wSize.x) / 2;
+        ypos = (vmode->height - sandsim->wSize.y) / 2;
+    }
+    else {
+        sandsim->wSize = (vec2s){ {(float)vmode->width, (float)vmode->height} };
+    }
+    glfwSetWindowMonitor(sandsim->window, sandsim->fullScreen ? monitor : NULL, xpos, ypos, sandsim->wSize.x, sandsim->wSize.y, GLFW_DONT_CARE);
+    glfwShowWindow(sandsim->window);
+    glfwMakeContextCurrent(sandsim->window);
+    //glfwSwapInterval(1);  //vsync
+}
+
+static void glInit()
+{
+    //load opengl
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    printf("GL: %s\n", glGetString(GL_VERSION));
+    printf("GL: %s\n", glGetString(GL_RENDERER));
+    printf("GL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+#ifdef _DEBUG
+    glDebugMessageCallback(gl_error_callback, NULL);
+#endif // _DEBUG
+
+    sandsim->shaderProgram = shaderCreate();
+    shaderLoad(sandsim->shaderProgram, "../assets/shaders/sandsim.vert", GL_VERTEX_SHADER);
+    shaderLoad(sandsim->shaderProgram, "../assets/shaders/sandsim.frag", GL_FRAGMENT_SHADER);
+    sandsim->pipeline = pipelineCreate();
+    pipelineStage(sandsim->pipeline, GL_VERTEX_SHADER_BIT | GL_FRAGMENT_SHADER_BIT, sandsim->shaderProgram);
+
+    glCreateVertexArrays(1, &sandsim->worldVao);
+    glBindVertexArray(sandsim->worldVao);
+
+    float verts[] = {
+        0.0f, 0.0f,     -1.0f, 1.0f, 1.0f, 1.0f,
+        200.0f, 0.0f,   -1.0f, 1.0f, 1.0f, 1.0f,
+        100.0f, 200.0f, -1.0f, 1.0f, 1.0f, 1.0f
+    };
+
+    glCreateBuffers(1, &sandsim->worldVbo);
+    glNamedBufferStorage(sandsim->worldVbo, sizeof(float) * 18, verts, 0);
+
+    glVertexArrayVertexBuffer(sandsim->worldVao, 0, sandsim->worldVbo, 0, sizeof(float) * 6);
+
+    glEnableVertexArrayAttrib(sandsim->worldVao, 0);
+    glVertexArrayAttribBinding(sandsim->worldVao, 0, 0);
+    glVertexArrayAttribFormat(sandsim->worldVao, 0, 3, GL_FLOAT, false, 0);
+
+    glEnableVertexArrayAttrib(sandsim->worldVao, 1);
+    glVertexArrayAttribBinding(sandsim->worldVao, 1, 0);
+    glVertexArrayAttribFormat(sandsim->worldVao, 1, 3, GL_FLOAT, false, sizeof(float) * 3);
+}
+
+#pragma endregion
+
+
+#pragma region =======================   INPUT   ====================================
+
 static void updateButtons(size_t count, Button* buttons)
 {
     for (size_t i = 0; i < count; i++)
@@ -99,97 +198,56 @@ static void processInput()
     sandsim->mouse.position = newPos;
 }
 
+#pragma endregion
+
 int main(void)
 {
-    glfwSetErrorCallback(glfw_error_callback);
-    if (glfwInit() == GLFW_FALSE)
-    {
-        printf("Failed to initialize GLFW\n");
-        return 1;
-    }
-    printf("GLFW: %s\n", glfwGetVersionString());
-
     sandsim = calloc(1, sizeof(Sandsim));
     assert(sandsim != NULL);
     sandsim->wSize = (vec2s){ {800.0f, 600.0f} };
     sandsim->fullScreen = false;
 
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-#ifdef _DEBUG
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#endif // DEBUG
-    sandsim->window = glfwCreateWindow(sandsim->wSize.x, sandsim->wSize.y, "Sandsim", NULL, NULL);
-    assert(sandsim->window != NULL);
+    windowInit();
+    glInit();
     
-    //window size, fullscreen
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
-    int xpos = 0;
-    int ypos = 0;
-    if (!sandsim->fullScreen)
-    {
-        xpos = (vmode->width - sandsim->wSize.x) / 2;
-        ypos = (vmode->height - sandsim->wSize.y) / 2;
-    }
-    else {
-        sandsim->wSize = (vec2s){ {(float)vmode->width, (float)vmode->height} };
-    }
-    glfwSetWindowMonitor(sandsim->window, sandsim->fullScreen ? monitor : NULL, xpos, ypos, sandsim->wSize.x, sandsim->wSize.y, GLFW_DONT_CARE);
-    glfwShowWindow(sandsim->window);
-    glfwMakeContextCurrent(sandsim->window);
-
-    //load opengl
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    printf("GL: %s\n", glGetString(GL_VERSION));
-    printf("GL: %s\n", glGetString(GL_RENDERER));
-    printf("GL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-#ifdef _DEBUG
-    glDebugMessageCallback(gl_error_callback, NULL);
-#endif // _DEBUG
-
-    glfwSwapInterval(1);
-
-    //glfw callbacks
-    glfwSetFramebufferSizeCallback(sandsim->window, glfw_framebuffer_size_callback);
-    glfwSetWindowSizeCallback(sandsim->window, glfw_windowsize_callback);
-    //glfwSetCursorPosCallback(demo->window, demoCursorPos);
-    glfwSetKeyCallback(sandsim->window, glfw_key_callback);
-    glfwSetMouseButtonCallback(sandsim->window, glfw_mouse_button_callback);
-    glfwSetCharCallback(sandsim->window, glfw_char_callback);
-    glfwSetScrollCallback(sandsim->window, glfw_scroll_callback);
-
     int w, h;
     glfwGetFramebufferSize(sandsim->window, &w, &h);
     sandsim->fbSize = (vec2s){ {w,h} };
     glfwGetWindowSize(sandsim->window, &w, &h);
     sandsim->wSize = (vec2s){ {w,h} };
 
+    sandsim->projection = glms_ortho(0.0f, sandsim->fbSize.x, 0.0f, sandsim->fbSize.y, 0.1f, 1.0f);
+
     glViewport(0, 0, sandsim->fbSize.x, sandsim->fbSize.y);
-    glEnable(GL_DEPTH_TEST);
 
     //main loop
+    vec4s clearcolor = { 0.0f, 0.0f, 0.0f, 1.0f };
     sandsim->running = true;
     while (sandsim->running)
     {
         processInput();
 
         //update
-
+        if (sandsim->keys[GLFW_KEY_ESCAPE].pressed)
+            glfwSetWindowShouldClose(sandsim->window, GLFW_TRUE);
 
         //render
+        glClearBufferfv(GL_COLOR, 0, &clearcolor);
+
+        int l = glGetProgramResourceLocation(sandsim->shaderProgram->handle, GL_UNIFORM, "proj");
+        //glGetUniformLocation(sandsim->shaderProgram->handle, "proj");
+        glProgramUniformMatrix4fv(sandsim->shaderProgram->handle, l, 1, GL_FALSE, sandsim->projection.raw[0]);
+        pipelineSet(sandsim->pipeline);
+        glBindVertexArray(sandsim->worldVao);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glfwSwapBuffers(sandsim->window);
         
-
-
         //reset for next frame
         sandsim->mouse.delta = GLMS_VEC2_ZERO;
         sandsim->mouse.wheelDelta = 0.0f;
 
         //poll & swap
-        glfwSwapBuffers(sandsim->window);
         glfwPollEvents();
 
         if (glfwWindowShouldClose(sandsim->window) == GLFW_TRUE)
@@ -198,6 +256,10 @@ int main(void)
 
     if (sandsim)
     {
+        glDeleteBuffers(1, &sandsim->worldVbo);
+        glDeleteVertexArrays(1, &sandsim->worldVao);
+        pipelineDestroy(sandsim->pipeline);
+        shaderDestroy(sandsim->shaderProgram);
         glfwDestroyWindow(sandsim->window);
         free(sandsim);
         sandsim = NULL;

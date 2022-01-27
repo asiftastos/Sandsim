@@ -1,6 +1,6 @@
-#version 330 core
+#version 450 core
 
-in vec4 color;
+layout (location = 0) in vec4 color;
 
 out vec4 FragColor;
 

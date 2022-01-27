@@ -175,7 +175,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad\glad.c" />
+    <ClCompile Include="src\assets.c" />
     <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\map.c" />
+    <ClCompile Include="src\vec.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="cglm\win\cglm.vcxproj">
@@ -183,7 +186,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\assets.h" />
+    <ClInclude Include="src\map.h" />
     <ClInclude Include="src\sandsim.h" />
+    <ClInclude Include="src\vec.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

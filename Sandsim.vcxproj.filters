@@ -33,6 +33,9 @@
     <ClCompile Include="src\vec.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\renderer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\sandsim.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\vec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

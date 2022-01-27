@@ -178,6 +178,7 @@
     <ClCompile Include="src\assets.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\map.c" />
+    <ClCompile Include="src\renderer.c" />
     <ClCompile Include="src\vec.c" />
   </ItemGroup>
   <ItemGroup>
@@ -188,6 +189,7 @@
   <ItemGroup>
     <ClInclude Include="src\assets.h" />
     <ClInclude Include="src\map.h" />
+    <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\sandsim.h" />
     <ClInclude Include="src\vec.h" />
   </ItemGroup>

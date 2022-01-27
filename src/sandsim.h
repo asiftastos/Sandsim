@@ -9,6 +9,7 @@
 #include "GLFW/glfw3.h"
 #include "cglm/struct.h"
 #include "assets.h"
+#include "renderer.h"
 
 typedef struct Button
 {
@@ -38,7 +39,5 @@ typedef struct Sandsim
 
     Shader* shaderProgram;
     Pipeline* pipeline;
-    unsigned int worldVao;
-    unsigned int worldVbo;
-    mat4s projection;
+    WorldRenderer* wRenderer;
 }Sandsim;

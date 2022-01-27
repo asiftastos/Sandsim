@@ -149,28 +149,6 @@ static void glInit()
     shaderLoad(sandsim->shaderProgram, "../assets/shaders/sandsim.frag", GL_FRAGMENT_SHADER);
     sandsim->pipeline = pipelineCreate();
     pipelineStage(sandsim->pipeline, GL_VERTEX_SHADER_BIT | GL_FRAGMENT_SHADER_BIT, sandsim->shaderProgram);
-
-    glCreateVertexArrays(1, &sandsim->worldVao);
-    glBindVertexArray(sandsim->worldVao);
-
-    float verts[] = {
-        0.0f, 0.0f,     -1.0f, 1.0f, 1.0f, 1.0f,
-        200.0f, 0.0f,   -1.0f, 1.0f, 1.0f, 1.0f,
-        100.0f, 200.0f, -1.0f, 1.0f, 1.0f, 1.0f
-    };
-
-    glCreateBuffers(1, &sandsim->worldVbo);
-    glNamedBufferStorage(sandsim->worldVbo, sizeof(float) * 18, verts, 0);
-
-    glVertexArrayVertexBuffer(sandsim->worldVao, 0, sandsim->worldVbo, 0, sizeof(float) * 6);
-
-    glEnableVertexArrayAttrib(sandsim->worldVao, 0);
-    glVertexArrayAttribBinding(sandsim->worldVao, 0, 0);
-    glVertexArrayAttribFormat(sandsim->worldVao, 0, 3, GL_FLOAT, false, 0);
-
-    glEnableVertexArrayAttrib(sandsim->worldVao, 1);
-    glVertexArrayAttribBinding(sandsim->worldVao, 1, 0);
-    glVertexArrayAttribFormat(sandsim->worldVao, 1, 3, GL_FLOAT, false, sizeof(float) * 3);
 }
 
 #pragma endregion
@@ -216,8 +194,23 @@ int main(void)
     glfwGetWindowSize(sandsim->window, &w, &h);
     sandsim->wSize = (vec2s){ {w,h} };
 
-    sandsim->projection = glms_ortho(0.0f, sandsim->fbSize.x, 0.0f, sandsim->fbSize.y, 0.1f, 1.0f);
+    sandsim->wRenderer = wRendererCreate(sandsim->fbSize.x, sandsim->fbSize.y, sandsim->shaderProgram);
 
+    float verts[] = {
+        0.0f, 0.0f,     -1.0f,
+        200.0f, 0.0f,   -1.0f,
+        100.0f, 200.0f, -1.0f
+    };
+
+    float cols[] = {
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f
+    };
+
+    wRendererVertexData(sandsim->wRenderer, 9, verts);
+    wRendererColorData(sandsim->wRenderer, 9, cols);
+    
     glViewport(0, 0, sandsim->fbSize.x, sandsim->fbSize.y);
 
     //main loop
@@ -234,12 +227,9 @@ int main(void)
         //render
         glClearBufferfv(GL_COLOR, 0, &clearcolor);
 
-        int l = glGetProgramResourceLocation(sandsim->shaderProgram->handle, GL_UNIFORM, "proj");
-        //glGetUniformLocation(sandsim->shaderProgram->handle, "proj");
-        glProgramUniformMatrix4fv(sandsim->shaderProgram->handle, l, 1, GL_FALSE, sandsim->projection.raw[0]);
+        glProgramUniformMatrix4fv(sandsim->shaderProgram->handle, sandsim->wRenderer->projUniformLocation, 1, GL_FALSE, sandsim->wRenderer->projection.raw[0]);
         pipelineSet(sandsim->pipeline);
-        glBindVertexArray(sandsim->worldVao);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        wRendererDraw(sandsim->wRenderer);
 
         glfwSwapBuffers(sandsim->window);
         
@@ -256,8 +246,7 @@ int main(void)
 
     if (sandsim)
     {
-        glDeleteBuffers(1, &sandsim->worldVbo);
-        glDeleteVertexArrays(1, &sandsim->worldVao);
+        wRendererDestroy(sandsim->wRenderer);
         pipelineDestroy(sandsim->pipeline);
         shaderDestroy(sandsim->shaderProgram);
         glfwDestroyWindow(sandsim->window);

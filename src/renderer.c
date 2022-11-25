@@ -115,10 +115,10 @@ void wRendererColorData(WorldRenderer* wr, int count, float* colors)
 	glNamedBufferStorage(wr->colorBuffer, sizeof(float) * count, colors, 0);
 }
 
-void wRendererDraw(WorldRenderer* wr)
+void wRendererDraw(WorldRenderer* wr, uint32_t count)
 {
 	glBindVertexArray(wr->vertexArray);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, count);
 }
 
 #pragma endregion

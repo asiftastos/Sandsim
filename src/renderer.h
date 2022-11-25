@@ -31,6 +31,6 @@ WorldRenderer* wRendererCreate(int width, int height, Shader* sh);
 void wRendererDestroy(WorldRenderer* wr);
 void wRendererVertexData(WorldRenderer* wr, int count, float* verts);
 void wRendererColorData(WorldRenderer* wr, int count, float* colors);
-void wRendererDraw(WorldRenderer* wr);
+void wRendererDraw(WorldRenderer* wr, uint32_t count);
 
 #pragma endregion

@@ -182,7 +182,7 @@ int main(void)
 {
     sandsim = calloc(1, sizeof(Sandsim));
     assert(sandsim != NULL);
-    sandsim->wSize = (vec2s){ {800.0f, 600.0f} };
+    sandsim->wSize = (vec2s){1920.0f, 1080.0f};
     sandsim->fullScreen = false;
 
     windowInit();
@@ -190,31 +190,37 @@ int main(void)
     
     int w, h;
     glfwGetFramebufferSize(sandsim->window, &w, &h);
-    sandsim->fbSize = (vec2s){ {w,h} };
+    sandsim->fbSize = (vec2s){w,h};
     glfwGetWindowSize(sandsim->window, &w, &h);
-    sandsim->wSize = (vec2s){ {w,h} };
+    sandsim->wSize = (vec2s){w,h};
 
     sandsim->wRenderer = wRendererCreate(sandsim->fbSize.x, sandsim->fbSize.y, sandsim->shaderProgram);
 
     float verts[] = {
         0.0f, 0.0f,     -1.0f,
-        200.0f, 0.0f,   -1.0f,
-        100.0f, 200.0f, -1.0f
+        0.0f, 100.0f,   -1.0f,
+        100.0f, 100.0f, -1.0f,
+        0.0f, 0.0f,     -1.0f,
+        100.0f, 100.0f, -1.0f,
+        100.0f, 0.0f,   -1.0f
     };
 
     float cols[] = {
         1.0f, 1.0f, 1.0f,
         1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
         1.0f, 1.0f, 1.0f
     };
 
-    wRendererVertexData(sandsim->wRenderer, 9, verts);
-    wRendererColorData(sandsim->wRenderer, 9, cols);
+    wRendererVertexData(sandsim->wRenderer, 18, verts);
+    wRendererColorData(sandsim->wRenderer, 18, cols);
     
     glViewport(0, 0, sandsim->fbSize.x, sandsim->fbSize.y);
 
     //main loop
-    vec4s clearcolor = { 0.0f, 0.0f, 0.0f, 1.0f };
+    vec4s clearcolor = (vec4s){ 0.0f, 0.0f, 0.0f, 1.0f };
     sandsim->running = true;
     while (sandsim->running)
     {
@@ -229,7 +235,7 @@ int main(void)
 
         glProgramUniformMatrix4fv(sandsim->shaderProgram->handle, sandsim->wRenderer->projUniformLocation, 1, GL_FALSE, sandsim->wRenderer->projection.raw[0]);
         pipelineSet(sandsim->pipeline);
-        wRendererDraw(sandsim->wRenderer);
+        wRendererDraw(sandsim->wRenderer, 6);
 
         glfwSwapBuffers(sandsim->window);
         

@@ -178,44 +178,63 @@ static void processInput()
 
 #pragma endregion
 
+vec_float_t vertices;
+
+void addVertex(float x, float y, float z)
+{
+    vec_push(&vertices, x);
+    vec_push(&vertices, y);
+    vec_push(&vertices, z);
+}
+
+vec_float_t colors;
+
+void addColor(float x, float y, float z)
+{
+    vec_push(&colors, x);
+    vec_push(&colors, y);
+    vec_push(&colors, z);
+}
+
 int main(void)
 {
     sandsim = calloc(1, sizeof(Sandsim));
     assert(sandsim != NULL);
-    sandsim->wSize = (vec2s){1920.0f, 1080.0f};
+    sandsim->wSize = (vec2s){ 1920.0f, 1080.0f };
     sandsim->fullScreen = false;
 
     windowInit();
     glInit();
-    
+
     int w, h;
     glfwGetFramebufferSize(sandsim->window, &w, &h);
-    sandsim->fbSize = (vec2s){w,h};
+    sandsim->fbSize = (vec2s){ w,h };
     glfwGetWindowSize(sandsim->window, &w, &h);
-    sandsim->wSize = (vec2s){w,h};
+    sandsim->wSize = (vec2s){ w,h };
 
     sandsim->wRenderer = wRendererCreate(sandsim->fbSize.x, sandsim->fbSize.y, sandsim->shaderProgram);
 
-    float verts[] = {
-        0.0f, 0.0f,     -1.0f,
-        0.0f, 100.0f,   -1.0f,
-        100.0f, 100.0f, -1.0f,
-        0.0f, 0.0f,     -1.0f,
-        100.0f, 100.0f, -1.0f,
-        100.0f, 0.0f,   -1.0f
-    };
+    vec_init(&vertices);
+    addVertex(0.0f, 0.0f, -1.0f);
+    addVertex(0.0f, 100.0f, -1.0f);
+    addVertex(100.0f, 100.0f, -1.0f);
+    addVertex(0.0f, 0.0f, -1.0f);
+    addVertex(100.0f, 100.0f, -1.0f);
+    addVertex(100.0f, 0.0f, -1.0f);
 
-    float cols[] = {
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f
-    };
+    vec_init(&colors);
+    addColor(1.0f, 1.0f, 1.0f);
+    addColor(1.0f, 1.0f, 1.0f);
+    addColor(1.0f, 1.0f, 1.0f);
+    addColor(1.0f, 1.0f, 1.0f);
+    addColor(1.0f, 1.0f, 1.0f);
+    addColor(1.0f, 1.0f, 1.0f);
 
-    wRendererVertexData(sandsim->wRenderer, 18, verts);
-    wRendererColorData(sandsim->wRenderer, 18, cols);
+    wRendererVertexData(sandsim->wRenderer, vertices.length, vertices.data);
+    wRendererColorData(sandsim->wRenderer, colors.length, colors.data);
+
+    vec_deinit(&vertices);
+    vec_deinit(&colors);
     
     glViewport(0, 0, sandsim->fbSize.x, sandsim->fbSize.y);
 
